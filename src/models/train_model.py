@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import joblib
 import mlflow
+import mlflow.xgboost
 import mlflow.sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
@@ -85,7 +86,7 @@ def main(args):
         mlflow.log_metrics({'mae': mae, 'r2': r2})
 
         # Log and register model
-        mlflow.sklearn.log_model(model, "tuned_model")
+        mlflow.xgboost.log_model(model, "tuned_model")
         model_name = model_cfg['name']
         model_uri = f"runs:/{mlflow.active_run().info.run_id}/tuned_model"
 
