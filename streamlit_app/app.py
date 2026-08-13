@@ -5,6 +5,8 @@ import time
 import os
 import socket  # For hostname and IP address
 
+API_ENDPOINT = os.getenv("FASTAPI_URL", "http://model:8000/predict")
+
 # Set the page configuration (must be the first Streamlit command)
 st.set_page_config(
     page_title="House Price Predictor",
@@ -67,8 +69,10 @@ with col2:
     # If button is clicked, show prediction
     if predict_button:
         # Show loading spinner
+        if "prediction" in st.session_state:
+            del st.session_state["prediction"]
+
         with st.spinner("Calculating prediction..."):
-            # Prepare data for API call
             api_data = {
                 "sqft": sqft,
                 "bedrooms": bedrooms,
@@ -79,24 +83,19 @@ with col2:
             }
 
             try:
-                # Get API endpoint from environment variable or use default
-                api_endpoint = os.getenv("API_URL", "http://model:8000")
-                predict_url = f"{api_endpoint.rstrip('/')}/predict"
+                # Pobieramy adres BEZPOŚREDNIO w momencie kliknięcia
+                target_url = os.getenv("API_URL", "http://model:8000/predict")
+                st.write(f"Connecting to API at: {target_url}")
 
-                st.write(f"Connecting to API at: {predict_url}")
-
-                # Make API call to FastAPI backend
-                response = requests.post(predict_url, json=api_data)
-                response.raise_for_status()  # Raise exception for bad status codes
+                response = requests.post(target_url, json=api_data)
+                response.raise_for_status()
                 prediction = response.json()
 
-                # Store prediction in session state
                 st.session_state.prediction = prediction
                 st.session_state.prediction_time = time.time()
             except requests.exceptions.RequestException as e:
                 st.error(f"Error connecting to API: {e}")
                 st.warning("Using mock data for demonstration purposes. Please check your API connection.")
-                # For demo purposes, use mock data if API fails
                 st.session_state.prediction = {
                     "predicted_price": 467145,
                     "confidence_interval": [420430.5, 513859.5],
